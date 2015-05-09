@@ -50,7 +50,7 @@ negative, right?)
 Despite the name and the reasoning behind the name, these aren't a
 replacement for logical pathnames and are not "better" than logical
 pathnames; they just solve a different problem than that which logical
-hosts solve on modern machines..
+hosts solve on modern machines.
 
 
 Example
