@@ -42,6 +42,7 @@
    #:define-illogical-host              ; MACRO
 
    #:illogical-pathname                 ; TYPE (STRUCT)
+   #:make-illogical-pathname            ; FUNCTION (CONSTRUCTOR)
    #:illogical-pathname-p               ; FUNCTION (PREDICATE)
    #:illogical-pathname-name            ; FUNCTION
    #:illogical-pathname-type            ; FUNCTION
