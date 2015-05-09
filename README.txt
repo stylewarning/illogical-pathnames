@@ -4,54 +4,57 @@
                            By Robert Smith
 
 
-A Situation
------------
+Purpose
+-------
 
-So, you're making a project, but you don't want to hardcode pathnames
-everywhere. Maybe because you're not the only user of the program, or
-maybe because you're not the only developer, or maybe because your
-development and deployment environments are different.
+The purpose of this library is to allow one to specify pathnames in
+source files whose syntax mostly doesn't depend on a physical path
+location. To put it simply, one can write
 
-You look in CLHS, and find this wonderful tool called "logical
-pathnames", which allow you to specify a "logical host" and
-furthermore define a "translation" for this host to a physical
-pathname. For example, we might have the logical host "SRC" which
-points to the root of our source code, and #P"SRC:assets;my_pic.JPG"
-might be a JPEG asset our program uses.
+    #P(:HOME (".emacs.d") "foo.el")
 
-But oops, you forgot, the ANSI standard specifies that logical
-pathname namestrings (like the one above) can only contain uppercase
-letters, numbers, and hyphens.
+instead of
 
-So, you go through all of your files and get rid of the underscores
-and make everything uppercase.
+    #P"/home/me/.emacs.d/foo.el".
 
-But oops, you forgot, pathnames get downcased upon translation.
+Somewhere, :HOME---a so-called "illogical host"---has to be
+specified. This is done by associating it with a directory via the
+macro DEFINE-ILLOGICAL-HOST. They can be redefined, which won't affect
+evaluated uses of #P(...) syntax.
 
-You begin to feel annoyed. Can't we have more logical logical
-pathnames?
+The former syntax isn't actually an "illogical pathname"; it evaluates
+to a physical pathname. (See the example below and the FAQ.) However,
+it does involve objects of the type ILLOGICAL-PATHNAME under the hood.
 
-Illogical pathnames to the rescue. Illogical pathnames are sort of
-like logical pathnames that cover the 95% use-case, like the one
-above. In general,
+Using illogical pathnames allows one to easily write code whose
+pathnames are relative to a few known base directories. When the
+program is moved, or perhaps an executable is created, one only has to
+redefine the set of illogical hosts. Using the power of
+*LOAD-TRUENAME* and others, one can make mostly portable applications
+that don't depend on physical filesystem location at all.
 
-    1. Define some illogical hosts---represented as symbols---which
-       associate to directories.
-    
-    Option 2.a. Use the extended #P syntax.
-    
-    Option 2.b. Make illogical pathnames using MAKE-ILLOGICAL-PATHNAME
-                and translate them to physical pathnames using
-                TRANSLATE-ILLOGICAL-PATHNAME.
 
-That's it.
+Name
+----
 
-You can re-define illogical hosts, store illogical pathnames, etc. The
-illogical pathname syntax is transparent and allows you to work with
-all of the pathname-expecting functions and macros such as OPEN and
-WITH-OPEN-FILE.
+Before this library, I attempted to solve the same problem by defining
+logical hosts with wildcard translations. This worked relatively well
+with Clozure CL, due to their more flexible implementation of logical
+pathnames. However, more ANSI compliant systems (with respect to
+logical pathnames) didn't work with the same code. As such, in my
+mind, I made "logical pathnames that solve the 95% case" and called
+them "illogical pathnames", a play on the fact that they were supposed
+to be "logical logical pathnames". (A double positive makes a
+negative, right?)
 
-Here's an example.
+Despite the name and the reasoning behind the name, these aren't a
+replacement for logical pathnames and are not "better" than logical
+pathnames; they just solve a different problem than that which logical
+hosts solve on modern machines..
+
+
+Example
+-------
 
 Note that normal pathname syntax isn't changed.
 
@@ -69,7 +72,9 @@ directory.
     > #P(:home ("Scratch") "new.txt")
     #P"/home/me/Scratch/new.txt"
 
-What does #P(...) really expand into? Quote it.
+We see that #P(...) isn't truly a literal for an illogical
+pathname. It returned a physical pathname. What does #P(...) really
+expand into then?
 
     > '#P(:home ("Scratch") "new.txt")
     (ILLOGICAL-PATHNAMES:TRANSLATE-ILLOGICAL-PATHNAME
@@ -79,7 +84,7 @@ What does #P(...) really expand into? Quote it.
           :NAME "new"
           :TYPE "txt"))
 
-Just a translation of an illogical pathname object.
+Just an unevaluated translation of an illogical pathname object.
 
 Let's define another illogical host referring to my scratch space
 directory in my home directory.
@@ -107,7 +112,7 @@ That is basically it.
 Frequently Asked Questions
 --------------------------
 
-Q. Why doesn't #P(...) return an illogical pathname object?
+Q. Why doesn't #P(...) specify a literal illogical pathname object?
 
 This was a pragmatic choice. If Common Lisp had a generic function
 called, say, TRANSLATE-TO-PATHNAME which all relevant Common Lisp
@@ -125,12 +130,12 @@ No problem. The file "illogical-pathnames.lisp" is self-contained. You
 can load it as-is.
 
 
-Q. What you said about illogical pathnames isn't true. I tried it and
+Q. Logical pathnames can solve this problem. I tried it and
    it works fine!
    
 Your implementation (e.g., Clozure CL) sanely nixed Common Lisp's idea
-of logical pathnames and made them useful. Unfortunately, it is not
-ANSI conforming.
+of logical pathnames and made them more useful for solving this
+problem. Unfortunately, it is not ANSI conforming.
 
 
 Q. Why didn't you just make a DEFINE-* macro and a function?
@@ -139,3 +144,14 @@ Pathnames need to be convenient, and specifying functions in full is
 not syntactically convenient. If one doesn't like the #P syntax, they
 may opt to create ILLOGICAL-PATHNAME objects and call
 TRANSLATE-ILLOGICAL-PATHNAME at will.
+
+       > (ipath:define-illogical-host :home "/Users/me/")
+       :HOME
+       > (ipath:make-illogical-pathname
+          :host ':home
+          :directory '("foo" "bar")
+          :name "test"
+          :type "txt")
+       #S(ILLOGICAL-PATHNAMES:ILLOGICAL-PATHNAME :HOST :HOME :DIRECTORY ("foo" "bar") :NAME "test" :TYPE "txt")
+       > (ipath:translate-illogical-pathname *)
+       #P"/Users/me/foo/bar/test.txt"
