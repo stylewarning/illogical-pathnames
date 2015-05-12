@@ -65,7 +65,9 @@
 ;;; utilities provided by CL-FAD. Most of them are trivial, but are
 ;;; nonetheless copied from CL-FAD.
 ;;;
-;;; We opt to not rely on CL-FAD for bootstrapping reasons. Things li
+;;; We opt to not rely on a separate distribution of CL-FAD for
+;;; bootstrapping reasons. Applications will usually want to establish
+;;; illogical hosts before using Quicklisp or ASDF are installed.
 ;;;
 ;;; Below is the copyright notice and license agreement as required by
 ;;; CL-FAD.
@@ -152,15 +154,16 @@ This simply tests if A's directory list starts with :ABSOLUTE"
 
 (defun (setf illogical-host-translation) (directory illogical-host)
   (check-type illogical-host illogical-host)
-  (assert (directory-pathname-p directory)
+  (assert (or (null directory)
+              (and
+               (directory-pathname-p directory)
+               (pathname-absolute-p directory)))
           (directory)
-          "~S doesn't look like a directory."
+          "~S isn't null or an absolute directory."
           directory)
-  (assert (pathname-absolute-p directory)
-          (directory)
-          "~S isn't an absolute path."
-          directory)
-  (setf (gethash illogical-host *illogical-hosts*) directory))
+  (if (null directory)
+      (remhash illogical-host *illogical-hosts*)
+      (setf (gethash illogical-host *illogical-hosts*) directory)))
 
 (defmacro define-illogical-host (host directory &optional documentation)
   "Define the illogical host HOST to the absolute directory DIRECTORY."
