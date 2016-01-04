@@ -130,12 +130,30 @@ No problem. The file "illogical-pathnames.lisp" is self-contained. You
 can load it as-is.
 
 
-Q. Logical pathnames can solve this problem. I tried it and
+Q. ANSI logical pathnames can solve this problem. I tried it and
    it works fine!
    
-Your implementation (e.g., Clozure CL) sanely nixed Common Lisp's idea
-of logical pathnames and made them more useful for solving this
-problem. Unfortunately, it is not ANSI conforming.
+The ANSI spec requires that strings in logical pathnames must be uppercase,
+and the system should convert them to uppercase when pathnames are created:
+
+"Logical pathname words are restricted to non-case-sensitive letters,
+digits, and hyphens to avoid creating problems with real file systems
+that support limited character sets for file naming. (If logical pathnames
+were case-sensitive, it would be very difficult to map them into a file
+system that is not sensitive to case in its file names.)"
+
+https://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node213.html
+
+The phrase in parentheses above is precisely the opposite of the truth.
+A fully ANSI-conforming logical pathname implementation cannot generally
+be used on a case-sensitive file system such as that typically used in Linux
+or Unix.
+
+If you are not seeing this problem with your CL implementation, it is either because
+you are using a case-insensitive file system like MacOSX, or because
+your implementation (e.g., Clozure CL or Franz) sanely nixed the ANSI idea
+of logical pathnames and made them case-preserving.
+Unfortunately, that is not ANSI conforming.
 
 
 Q. Why didn't you just make a DEFINE-* macro and a function?

@@ -99,12 +99,17 @@
 ;;; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
+#-OPENMCL
 (defun component-present-p (value)
   "Helper function for DIRECTORY-PATHNAME-P which checks whether VALUE
    is neither NIL nor the keyword :UNSPECIFIC."
   (and value (not (eql value :unspecific))))
 
+#+OPENMCL
+(defun directory-pathname-p (pathspec)
+  (ccl:directory-pathname-p pathspec))
+
+#-OPENMCL
 (defun directory-pathname-p (pathspec)
   "Returns NIL if PATHSPEC \(a pathname designator) does not designate
 a directory, PATHSPEC otherwise.  It is irrelevant whether file or
@@ -251,4 +256,6 @@ This simply tests if A's directory list starts with :ABSOLUTE"
     (set-dispatch-macro-character #\# #\P *common-lisp-sharp-p*)
     t))
 
-(enable-illogical-pathname-syntax)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (enable-illogical-pathname-syntax)
+  (provide :ILLOGICAL-PATHNAMES))
