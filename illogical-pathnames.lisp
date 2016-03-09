@@ -216,12 +216,13 @@ This simply tests if A's directory list starts with :ABSOLUTE"
   (let* ((*read-eval* nil)
          (specifier (read stream t)))
     (unless *read-suppress*
-      (destructuring-bind (host directory &optional filename)
+      (destructuring-bind (host &optional directory filename)
                           specifier
         (check-type host illogical-host)
         (check-type filename (or null string))
-        (assert (listp directory))
-        (assert (every #'stringp directory))
+        (when directory
+          (assert (listp directory))
+          (assert (every #'stringp directory)))
         (let ((file-pathname (if (null filename)
                                  (make-pathname)
                                  (pathname-as-file filename))))
