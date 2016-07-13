@@ -99,12 +99,17 @@
 ;;; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
+#-OPENMCL
 (defun component-present-p (value)
   "Helper function for DIRECTORY-PATHNAME-P which checks whether VALUE
    is neither NIL nor the keyword :UNSPECIFIC."
   (and value (not (eql value :unspecific))))
 
+#+OPENMCL
+(defun directory-pathname-p (pathspec)
+  (ccl:directory-pathname-p pathspec))
+
+#-OPENMCL
 (defun directory-pathname-p (pathspec)
   "Returns NIL if PATHSPEC \(a pathname designator) does not designate
 a directory, PATHSPEC otherwise.  It is irrelevant whether file or
@@ -210,22 +215,24 @@ This simply tests if A's directory list starts with :ABSOLUTE"
   (declare (ignore subchar arg))
   (let* ((*read-eval* nil)
          (specifier (read stream t)))
-    (destructuring-bind (host directory &optional filename)
-        specifier
-      (check-type host illogical-host)
-      (check-type filename (or null string))
-      (assert (listp directory))
-      (assert (every #'stringp directory))
-      (let ((file-pathname (if (null filename)
-                               (make-pathname)
-                               (pathname-as-file filename))))
-        (assert (null (pathname-directory file-pathname)))
-        `(translate-illogical-pathname
-          ,(make-illogical-pathname
-            :host host
-            :directory (copy-list directory)
-            :name (pathname-name file-pathname)
-            :type (pathname-type file-pathname)))))))
+    (unless *read-suppress*
+      (destructuring-bind (host &optional directory filename)
+                          specifier
+        (check-type host illogical-host)
+        (check-type filename (or null string))
+        (when directory
+          (assert (listp directory))
+          (assert (every #'stringp directory)))
+        (let ((file-pathname (if (null filename)
+                                 (make-pathname)
+                                 (pathname-as-file filename))))
+          (assert (null (pathname-directory file-pathname)))
+          `(translate-illogical-pathname
+            ,(make-illogical-pathname
+              :host host
+              :directory (copy-list directory)
+              :name (pathname-name file-pathname)
+              :type (pathname-type file-pathname))))))))
 
 (defun |new-#P-reader| (stream subchar arg)
   (let ((char (peek-char nil stream)))
@@ -251,4 +258,6 @@ This simply tests if A's directory list starts with :ABSOLUTE"
     (set-dispatch-macro-character #\# #\P *common-lisp-sharp-p*)
     t))
 
-(enable-illogical-pathname-syntax)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (enable-illogical-pathname-syntax)
+  (provide :ILLOGICAL-PATHNAMES))
