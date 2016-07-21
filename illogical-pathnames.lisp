@@ -240,18 +240,6 @@ This simply tests if A's directory list starts with :ABSOLUTE"
         (funcall #'|illogical-#P-reader| stream subchar arg)
         (funcall *common-lisp-sharp-p* stream subchar arg))))
 
-(defun enable-illogical-pathname-syntax ()
-  "Enable illogical pathname syntax.
-
-    #P\"...\"  ; traditional pathname syntax
-
-    #P(<illogical-host> (<directory name>*) <filename>?)
-"
-  (unless (boundp '*common-lisp-sharp-p*)
-    (setf *common-lisp-sharp-p* (get-dispatch-macro-character #\# #\P)))
-
-  (set-dispatch-macro-character #\# #\P #'|new-#P-reader|))
-
 (defun disable-illogical-pathname-syntax ()
   "Disable illogical pathname syntax."
   (when (boundp '*common-lisp-sharp-p*)
@@ -259,5 +247,18 @@ This simply tests if A's directory list starts with :ABSOLUTE"
     t))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (enable-illogical-pathname-syntax)
-  (provide :ILLOGICAL-PATHNAMES))
+
+(defun enable-illogical-pathname-syntax ()
+  "Enable illogical pathname syntax.
+
+    #P\"...\"  ; traditional pathname syntax
+
+    #P(<illogical-host> (<directory name>*) <filename>?)"
+  (unless (boundp '*common-lisp-sharp-p*)
+    (setf *common-lisp-sharp-p* (get-dispatch-macro-character #\# #\P)))
+
+  (set-dispatch-macro-character #\# #\P '|new-#P-reader|))
+
+(enable-illogical-pathname-syntax)
+(provide :ILLOGICAL-PATHNAMES)
+)
